@@ -1,0 +1,412 @@
+{
+  "name": "LLM Tracking with LangSmith",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "apiKey",
+              "value": "={{ $env.LANGSMITH_API_KEY }}"
+            },
+            {
+              "name": "endpoint",
+              "value": "https://api.smith.langchain.com"
+            },
+            {
+              "name": "project",
+              "value": "={{ $env.LANGSMITH_PROJECT }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-config",
+      "name": "Set Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.endpoint }}/traces",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "llm-operation-trace"
+            },
+            {
+              "name": "project_name",
+              "value": "={{ $json.project }}"
+            },
+            {
+              "name": "tags",
+              "value": "llm,chatgpt,automation"
+            },
+            {
+              "name": "metadata",
+              "value": "{\"workflow_id\": \"{{ $workflow.id }}\", \"execution_id\": \"{{ $execution.id }}\", \"timestamp\": \"{{ new Date().toISOString() }}\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-trace",
+      "name": "Create Trace",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "traceId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "userInput",
+              "value": "Hello, how are you today?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-input",
+      "name": "Set Input Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Configuration').first().json.endpoint }}/spans",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('Set Configuration').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "llm-input-processing"
+            },
+            {
+              "name": "trace_id",
+              "value": "={{ $json.traceId }}"
+            },
+            {
+              "name": "start_time",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "inputs",
+              "value": "{\"user_input\": \"{{ $json.userInput }}\"}"
+            },
+            {
+              "name": "metadata",
+              "value": "{\"operation\": \"input_processing\", \"model\": \"gpt-3.5-turbo\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-input",
+      "name": "Log Input",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-3.5-turbo"
+            },
+            {
+              "name": "messages",
+              "value": "[{\"role\": \"user\", \"content\": \"{{ $('Set Input Data').first().json.userInput }}\"}]"
+            },
+            {
+              "name": "max_tokens",
+              "value": "150"
+            },
+            {
+              "name": "temperature",
+              "value": "0.7"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-openai",
+      "name": "Call OpenAI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "llmResponse",
+              "value": "={{ $json.choices[0].message.content }}"
+            },
+            {
+              "name": "usage",
+              "value": "={{ JSON.stringify($json.usage) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-response",
+      "name": "Extract Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Configuration').first().json.endpoint }}/spans",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('Set Configuration').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "llm-output-logging"
+            },
+            {
+              "name": "trace_id",
+              "value": "={{ $('Set Input Data').first().json.traceId }}"
+            },
+            {
+              "name": "end_time",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "outputs",
+              "value": "{\"llm_response\": \"{{ $json.llmResponse }}\", \"usage\": {{ $json.usage }}}"
+            },
+            {
+              "name": "metadata",
+              "value": "{\"operation\": \"output_logging\", \"model\": \"gpt-3.5-turbo\", \"status\": \"success\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-output",
+      "name": "Log Output",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Configuration').first().json.endpoint }}/traces/{{ $('Set Input Data').first().json.traceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('Set Configuration').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "end_time",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "outputs",
+              "value": "{\"final_response\": \"{{ $('Extract Response').first().json.llmResponse }}\", \"total_tokens\": {{ JSON.parse($('Extract Response').first().json.usage).total_tokens }}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "complete-trace",
+      "name": "Complete Trace",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 300],
+      "webhookId": ""
+    }
+  ],
+  "connections": {
+    "Set Configuration": {
+      "main": [
+        [
+          {
+            "node": "Create Trace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Trace": {
+      "main": [
+        [
+          {
+            "node": "Set Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Input Data": {
+      "main": [
+        [
+          {
+            "node": "Log Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Input": {
+      "main": [
+        [
+          {
+            "node": "Call OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Extract Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Response": {
+      "main": [
+        [
+          {
+            "node": "Log Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Output": {
+      "main": [
+        [
+          {
+            "node": "Complete Trace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "2",
+  "tags": []
+} 

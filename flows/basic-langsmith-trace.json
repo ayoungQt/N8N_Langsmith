@@ -1,0 +1,248 @@
+{
+  "name": "Basic LangSmith Trace",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "apiKey",
+              "value": "={{ $env.LANGSMITH_API_KEY }}"
+            },
+            {
+              "name": "endpoint",
+              "value": "https://api.smith.langchain.com"
+            },
+            {
+              "name": "project",
+              "value": "={{ $env.LANGSMITH_PROJECT }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-config",
+      "name": "Set Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [240, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.endpoint }}/traces",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "n8n-workflow-trace"
+            },
+            {
+              "name": "project_name",
+              "value": "={{ $json.project }}"
+            },
+            {
+              "name": "tags",
+              "value": "n8n,workflow,automation"
+            },
+            {
+              "name": "metadata",
+              "value": "{\"workflow_id\": \"{{ $workflow.id }}\", \"execution_id\": \"{{ $execution.id }}\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-trace",
+      "name": "Create Trace",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "traceId",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "running"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-trace-id",
+      "name": "Set Trace ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Configuration').first().json.endpoint }}/spans",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('Set Configuration').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "workflow-execution"
+            },
+            {
+              "name": "trace_id",
+              "value": "={{ $json.traceId }}"
+            },
+            {
+              "name": "start_time",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "metadata",
+              "value": "{\"node\": \"workflow-execution\", \"status\": \"started\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "add-span",
+      "name": "Add Span",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Configuration').first().json.endpoint }}/traces/{{ $('Set Trace ID').first().json.traceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('Set Configuration').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "end_time",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "complete-trace",
+      "name": "Complete Trace",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "webhookId": ""
+    }
+  ],
+  "connections": {
+    "Set Configuration": {
+      "main": [
+        [
+          {
+            "node": "Create Trace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Trace": {
+      "main": [
+        [
+          {
+            "node": "Set Trace ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Trace ID": {
+      "main": [
+        [
+          {
+            "node": "Add Span",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Span": {
+      "main": [
+        [
+          {
+            "node": "Complete Trace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "1",
+  "tags": []
+} 
