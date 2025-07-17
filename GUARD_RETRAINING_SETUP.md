@@ -39,7 +39,7 @@ Add these to your `.env` file:
 
 ```env
 # LangSmith Configuration
-LANGSMITH_API_KEY=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
+LANGSMITH_API_KEY=YOUR_LANGSMITH_API_KEY
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_PROJECT=Prod_CSS_Service_AI
 LANGSMITH_SESSION=6d53c216-306e-4bd7-9c2d-e80ba5d66ce9
@@ -91,14 +91,29 @@ LANGSMITH_SESSION=6d53c216-306e-4bd7-9c2d-e80ba5d66ce9
 
 ## Step 3: Import and Configure the Workflow
 
-### 3.1 Import the Workflow
-1. Open n8n
-2. Click "Import from file"
-3. Select `flows/guard-prompt-retraining-v1.95.3.json`
+### 3.1 Import the Workflows
 
-**Note**: If the "Set Date Range & Config" node appears empty after import, manually add the fields using the configuration below.
+You will need to import two separate workflows into n8n: the main dynamic workflow and the global error handler.
 
-### 3.2 Update Configuration Node
+**1. Import the Main Workflow:**
+   - Open n8n.
+   - Click **Import from file**.
+   - Select `flows/dynamic-main-workflow.json`.
+
+**2. Import the Error Workflow:**
+   - In n8n, click **Import from file** again.
+   - Select `flows/error-workflow.json`.
+   - **Important:** Once imported, make sure this workflow is **active**. It listens for errors from all other workflows.
+
+### 3.2 Configure the Guard List
+The new dynamic workflow is designed to process multiple guards in a single run. The list of guards to be processed is configured directly within the workflow itself.
+
+1.  In the **"Dynamic Multi-Guard Prompt Retraining"** workflow, find the node named **"Guard Config List"**. This is a Code node that contains the master list.
+2.  Click on the node to open its settings.
+3.  In the **"JS Code"** section, you will see a list of `guardName` and `fileName` pairs.
+4.  To add, remove, or modify a guard, simply edit this list. Ensure the `guardName` exactly matches the run name in Langsmith and the `fileName` exactly matches the prompt file in your Google Drive folder.
+
+### 3.3 Update Configuration Node
 The workflow is pre-configured with your specific values, but verify the "Set Date Range & Config" node contains:
 
 ```json

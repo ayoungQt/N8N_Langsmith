@@ -1,0 +1,570 @@
+{
+    "name": "Automated Prompt Retraining - Final Dynamic",
+    "nodes": [
+        {
+            "parameters": {
+                "trigger_times": {
+                    "mode": "everyDay",
+                    "hour": 0
+                },
+                "timezone": "America/New_York"
+            },
+            "name": "Schedule Trigger (12am EST)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                -20,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "string": [
+                        {
+                            "name": "guards",
+                            "value": "={{ [\n  {\n    \"guardName\": \"tool supevisor\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"human assistant guard agentic\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"unusual prompt agentic\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"agentic knowledge base\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"qa bot\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"financial advice guard agentic\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"system instruction agentic\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  },\n  {\n    \"guardName\": \"conversational hallucination agentic\",\n    \"guardFileId\": \"YOUR_GDRIVE_FILE_ID_HERE\"\n  }\n] }}"
+                        },
+                        {
+                            "name": "min_created_at",
+                            "value": "={{ $now.minus({ days: 7 }).startOf('day').toUTC().toISO() }}"
+                        },
+                        {
+                            "name": "max_created_at",
+                            "value": "={{ $now.minus({ days: 7 }).endOf('day').toUTC().toISO() }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "parse": true
+                }
+            },
+            "name": "Config",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "inputField": "={{$node[\"Config\"].json.guards}}"
+            },
+            "name": "Loop Over Guards",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 1,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://api.smith.langchain.com/feedback",
+                "authentication": "headerAuth",
+                "jsonParameters": true,
+                "parameters": [
+                    {
+                        "name": "min_created_at",
+                        "value": "={{$node[\"Config\"].json[\"min_created_at\"]}}"
+                    },
+                    {
+                        "name": "max_created_at",
+                        "value": "={{$node[\"Config\"].json[\"max_created_at\"]}}"
+                    },
+                    {
+                        "name": "key",
+                        "value": "False Positive"
+                    },
+                    {
+                        "name": "name",
+                        "value": "={{$json.guardName}}"
+                    },
+                    {
+                        "name": "limit",
+                        "value": 100
+                    }
+                ],
+                "options": {
+                    "retryOnFail": true,
+                    "retryCount": 3,
+                    "retryInterval": 1000
+                }
+            },
+            "name": "Get Initial Feedback",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                640,
+                300
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "YOUR_LANGSMITH_CREDENTIAL_ID",
+                    "name": "Langsmith API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{$json.body.length}}",
+                            "operation": "larger",
+                            "value2": 0
+                        }
+                    ]
+                }
+            },
+            "name": "Check for Records",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                860,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "operation": "append",
+                "spreadsheetId": "YOUR_SHEET_ID",
+                "sheetName": "YOUR_LOG_SHEET_NAME",
+                "fields": {
+                    "values": [
+                        {
+                            "field": [
+                                {
+                                    "name": "Date of Run",
+                                    "value": "={{$now.toFormat('yyyy-MM-dd')}}"
+                                },
+                                {
+                                    "name": "Status",
+                                    "value": "Success"
+                                },
+                                {
+                                    "name": "Guard Name Updated",
+                                    "value": "={{$node[\"Loop Over Guards\"].json[\"guardName\"]}}"
+                                },
+                                {
+                                    "name": "Result",
+                                    "value": "No Records Found"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "name": "Log 'No Records'",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                1080,
+                400
+            ],
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+                    "name": "Google Sheets Credential"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "operation": "download",
+                "fileId": "={{$node[\"Loop Over Guards\"].json[\"guardFileId\"]}}",
+                "binaryData": false
+            },
+            "name": "Get Original Guard Prompt",
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 1,
+            "position": [
+                1080,
+                200
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+                    "name": "Google Drive Credential"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "inputField": "={{$node[\"Get Initial Feedback\"].json.body}}"
+            },
+            "name": "Loop Through Feedback",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "url": "=https://api.smith.langchain.com/runs/{{$json.run_id}}",
+                "authentication": "headerAuth"
+            },
+            "name": "Get Run Details",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                1520,
+                200
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "YOUR_LANGSMITH_CREDENTIAL_ID",
+                    "name": "Langsmith API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://api.smith.langchain.com/feedback",
+                "authentication": "headerAuth",
+                "jsonParameters": true,
+                "parameters": [
+                    {
+                        "name": "run",
+                        "value": "={{$json.run_id}}"
+                    }
+                ]
+            },
+            "name": "Get All Feedback For Run",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                1740,
+                200
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "YOUR_LANGSMITH_CREDENTIAL_ID",
+                    "name": "Langsmith API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                "authentication": "headerAuth",
+                "jsonBody": true,
+                "body": "={{ {\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": `You are an AI assistant...`\n    }]\n  }]\n} }}"
+            },
+            "name": "LLM 1: Analyze & Generate Example",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                1960,
+                200
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "YOUR_GEMINI_CREDENTIAL_ID",
+                    "name": "Gemini API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                "authentication": "headerAuth",
+                "jsonBody": true,
+                "body": "={{ {\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": `You are an expert prompt engineer...`\n    }]\n  }]\n} }}"
+            },
+            "name": "LLM 2: Refine Prompt",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                -50
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "YOUR_GEMINI_CREDENTIAL_ID",
+                    "name": "Gemini API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "title": "={{$node[\"Loop Over Guards\"].json[\"guardName\"]}} - Prompt Update - {{ $now.toFormat('yyyy-MM-dd') }}",
+                "content": "={{$node[\"LLM 2: Refine Prompt\"].json.body}}",
+                "folderId": "YOUR_GOOGLE_DRIVE_FOLDER_ID"
+            },
+            "name": "Create Google Doc",
+            "type": "n8n-nodes-base.googleDocs",
+            "typeVersion": 1,
+            "position": [
+                1520,
+                -50
+            ],
+            "credentials": {
+                "googleDocsOAuth2Api": {
+                    "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+                    "name": "Google Docs Credential"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "operation": "append",
+                "spreadsheetId": "YOUR_SHEET_ID",
+                "sheetName": "YOUR_LOG_SHEET_NAME",
+                "fields": {
+                    "values": [
+                        {
+                            "field": [
+                                {
+                                    "name": "Date of Run",
+                                    "value": "={{$now.toFormat('yyyy-MM-dd')}}"
+                                },
+                                {
+                                    "name": "Status",
+                                    "value": "Success"
+                                },
+                                {
+                                    "name": "Guard Name Updated",
+                                    "value": "={{$node[\"Loop Over Guards\"].json[\"guardName\"]}}"
+                                },
+                                {
+                                    "name": "Result",
+                                    "value": "Prompt Updated"
+                                },
+                                {
+                                    "name": "Link to Google Doc",
+                                    "value": "={{$node[\"Create Google Doc\"].json[\"documentId\"]}}"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "name": "Log Success",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                1740,
+                -50
+            ],
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+                    "name": "Google Sheets Credential"
+                }
+            }
+        },
+        {
+            "parameters": {},
+            "name": "Error Trigger",
+            "type": "n8n-nodes-base.errorTrigger",
+            "typeVersion": 1,
+            "position": [
+                200,
+                600
+            ]
+        },
+        {
+            "parameters": {
+                "functionCode": "const errorData = $json;\nconst to = \"ayoung@questrade.com\";\nconst subject = `n8n Workflow Failure: ${errorData.execution.workflow.name}`;\nconst body = `Workflow failed at node '${errorData.node.name}' with error: ${errorData.error.message}.\\n\\nSee execution: ${errorData.execution.url}`;\n\nconst emailString = [\n    `To: ${to}`,\n    `Subject: ${subject}`,\n    'Content-Type: text/plain; charset=utf-8',\n    '',\n    body\n].join('\\n');\n\n// Base64Url encode for Gmail API\nconst base64EncodedEmail = Buffer.from(emailString).toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\n\nreturn {\n    json: {\n        raw: base64EncodedEmail\n    }\n};"
+            },
+            "name": "Prepare Failure Email",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                420,
+                600
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "method": "POST",
+                "url": "https://www.googleapis.com/gmail/v1/users/me/messages/send",
+                "jsonBody": true,
+                "body": "={{$json}}"
+            },
+            "name": "Send Failure Email",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                640,
+                600
+            ],
+            "credentials": {
+                "googleOAuth2Api": {
+                    "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+                    "name": "Google Mail Credential"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Schedule Trigger (12am EST)": {
+            "main": [
+                [
+                    {
+                        "node": "Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Config": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Guards",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Guards": {
+            "main": [
+                [
+                    {
+                        "node": "Get Initial Feedback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Initial Feedback": {
+            "main": [
+                [
+                    {
+                        "node": "Check for Records",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check for Records": {
+            "main": [
+                [
+                    {
+                        "node": "Get Original Guard Prompt",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Log 'No Records'",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Original Guard Prompt": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Through Feedback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Through Feedback": {
+            "main": [
+                [
+                    {
+                        "node": "Get Run Details",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ],
+            "done": [
+                [
+                    {
+                        "node": "LLM 2: Refine Prompt",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Run Details": {
+            "main": [
+                [
+                    {
+                        "node": "Get All Feedback For Run",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get All Feedback For Run": {
+            "main": [
+                [
+                    {
+                        "node": "LLM 1: Analyze & Generate Example",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM 2: Refine Prompt": {
+            "main": [
+                [
+                    {
+                        "node": "Create Google Doc",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Google Doc": {
+            "main": [
+                [
+                    {
+                        "node": "Log Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Error Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Failure Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Failure Email": {
+            "main": [
+                [
+                    {
+                        "node": "Send Failure Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+} 

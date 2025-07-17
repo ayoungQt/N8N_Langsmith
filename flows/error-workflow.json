@@ -1,0 +1,48 @@
+{
+  "name": "Global Error Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "toEmail": "ayoung@questrade.com",
+        "subject": "={{ `Workflow Failed: ${$json.execution.workflow.name}` }}",
+        "message": "={{ `The workflow named **${$json.execution.workflow.name}** failed during execution.` }}\n\n**Error Details:**\n- **Node:** {{ $json.error.node.name }} ({{ $json.error.node.type }})\n- **Message:** {{ $json.error.message }}\n\n**Execution Details:**\n- **Execution URL:** {{ $json.execution.url }}\n- **Error Time:** {{ $now.toFormat('DD/MM/YYYY HH:mm:ss') }}\n\nPlease review the execution logs for more information.",
+        "options": {}
+      },
+      "id": "send-error-email",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "global-error-workflow"
+} 
