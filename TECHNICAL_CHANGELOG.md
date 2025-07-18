@@ -1,5 +1,18 @@
 ### Technical Change Log
 
+**Date:** July 19, 2024
+
+#### Bug Fixes & Refinements
+*   **fix(workflow):** Repaired the `Check for Records` IF node to be compatible with the user's n8n version. The condition now correctly uses the `notEqual` operator and checks against the array's `.length` property directly without a failing `.toNumber()` call.
+*   **fix(gdrive):** Corrected the `Find Guard Prompt By Name` node. The operation was changed from the unsupported `search` to `List`, and a specific query was added to find the file by its exact name within the correct parent folder.
+*   **fix(api):** Updated the `Get Initial Feedback` node's query parameters to include `key: "trip_validity"` and `score: 1`, allowing for more efficient filtering at the API source.
+
+#### Refactoring
+*   **refactor(workflow):** Removed the unnecessary `Prepare Guard Name` node entirely to improve clarity and reduce complexity. The logic was moved directly into the `Config` node, which now explicitly defines a `guardApiName` for each entry, making the data flow more transparent and robust.
+
+---
+### Technical Change Log
+
 **Date:** 2025-07-18
 
 #### Workflow Architecture
@@ -28,4 +41,30 @@
 #### Documentation
 *   **docs(setup):** Updated `GUARD_RETRAINING_SETUP.md` to reflect the latest changes.
     *   Revised import instructions to include both `dynamic-main-workflow.json` and `error-workflow.json`.
-    *   Added a new section explaining how to configure the list of guards in the `Guard Config List` code node. 
+    *   Added a new section explaining how to configure the list of guards in the `Guard Config List` code node.
+
+---
+# Changelog
+
+## [Unreleased] - 2024-07-17
+
+### Features
+- **feat(workflow):** Implemented a fully dynamic looping system to process all 8 configured guards automatically without manual intervention.
+- **feat(workflow):** Added a robust error handling branch that sends a detailed failure notification via a Gmail API HTTP request.
+
+### Fixes
+- **fix(api):** Corrected the core Langsmith API interaction logic. The workflow now fetches feedback first, then loops through results to get individual run details, correctly retrieving the necessary `run_name`.
+- **fix(api):** Updated the Langsmith API filter `key` to the correct value `trip_validity` and the `value` to `False Positive` to accurately retrieve records.
+- **fix(workflow):** Implemented an expression to automatically replace spaces with underscores in guard names to ensure API compatibility.
+- **fix(gdrive):** Replaced the use of hardcoded Google Drive file IDs with a dynamic search for files by name, making the workflow more resilient.
+- **fix(config):** Updated the list of `guardName` and `guardFileName` values in the central `Config` node to match the exact names used in your Langsmith and Google Drive environments.
+- **fix(workflow):** Addressed compatibility issues by explicitly setting the `mode` to `mergeByPosition` on two Merge nodes ("Combine Data" and "Prepare for Final Refinement") to ensure predictable behavior on your n8n version.
+- **fix(workflow):** Repaired the data flow by correctly connecting the `LLM 2: Refine Prompt` node to the `Create Google Doc` node.
+
+### Refactoring
+- **refactor(workflow):** Eliminated a redundant Merge node by updating downstream nodes to pull configuration data directly from the main `Config` node, simplifying the workflow's logic.
+- **refactor(security):** Removed hardcoded API keys and IDs from all project files, replacing them with placeholders or environment-aware configurations.
+
+### Chore
+- **chore(project):** Deleted numerous obsolete and superseded workflow files to clean up the repository.
+- **chore(docs):** Created a `README.md` file to serve as a central location for critical project information, including guard name mappings and configuration details. 
