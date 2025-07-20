@@ -1,5 +1,20 @@
 ### Technical Change Log
 
+**Date:** July 20, 2024
+
+#### Core Logic & Bug Fixes
+*   **fix(n8n-syntax):** Replaced all instances of the outdated `$item` variable with the correct `$input.item` in modern `Code` nodes.
+*   **fix(n8n-syntax):** Replaced the legacy `$nodes` variable with the modern `$('Node Name').item` syntax for referencing data from previous nodes.
+*   **fix(data-structure):** Corrected a critical data handling error in the `Find Guard File Name` node. The code now correctly processes the incoming array of `runs`, creates a new, valid JSON object, and populates it with `guardFileName` and `runDetails`, preventing the "json property must be an object" crash.
+*   **fix(gdrive-search):** Re-architected the file search mechanism to be robust. It now uses a two-step process: a `Google Drive: Search` node to find files by name, followed by a `Code` node to filter the results and select the one file from the correct parent folder. This bypasses the limitations of the node's built-in filters.
+*   **fix(download):** Configured the `Get Original Guard Prompt` (Google Drive) node to correctly use the `Download` operation and reference the file `id` from the output of the new filter node.
+
+#### Node Refactoring
+*   **refactor(workflow):** Replaced multiple legacy `Function` nodes with modern `Code` nodes to ensure compatibility and use up-to-date syntax.
+*   **refactor(workflow):** Cleaned up workflow logic by removing a confusing and unnecessary `Build Run URL` node left over from a previous, flawed design.
+
+### Technical Change Log
+
 **Date:** July 19, 2024
 
 #### Bug Fixes & Refinements
