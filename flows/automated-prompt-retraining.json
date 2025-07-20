@@ -1,562 +1,506 @@
 {
-    "name": "AnneY_LangSmith_RefineGuardPrompt_GDocs",
-    "nodes": [
-      {
-        "parameters": {
-          "rule": {
-            "interval": [
-              {}
-            ]
-          }
-        },
-        "name": "Schedule Trigger (12am EST)",
-        "type": "n8n-nodes-base.scheduleTrigger",
-        "typeVersion": 1,
-        "position": [
-          -3120,
-          880
-        ],
-        "id": "ea63d7a8-4f4a-48a5-ac90-718e222bdafc"
-      },
-      {
-        "parameters": {
-          "values": {
-            "string": [
-              {
-                "name": "guards",
-                "value": "={{ [\n  {\n    \"guardApiName\": \"tool_supevisor\",\n    \"guardFileName\": \"tool_supevisor_node.txt\"\n  },\n  {\n    \"guardApiName\": \"human_assistant_guard_agentic\",\n    \"guardFileName\": \"human_assistant_guard_agentic.txt\"\n  },\n  {\n    \"guardApiName\": \"unusual_prompt_agentic\",\n    \"guardFileName\": \"unusual_prompt_agentic_prompt.txt\"\n  },\n  {\n    \"guardApiName\": \"agentic_knowledge_base\",\n    \"guardFileName\": \"agentic_knowledge_base.txt\"\n  },\n  {\n    \"guardApiName\": \"qa_bot\",\n    \"guardFileName\": \"qa_bot_node.txt\"\n  },\n  {\n    \"guardApiName\": \"financial_advice_guard_agentic\",\n    \"guardFileName\": \"financial_guard_prompt.txt\"\n  },\n  {\n    \"guardApiName\": \"system_instruction_agentic\",\n    \"guardFileName\": \"system_instructions.txt\"\n  },\n  {\n    \"guardApiName\": \"conversational_hallucination_agentic\",\n    \"guardFileName\": \"hallucination_guard_prompt.txt\"\n  }\n] }}"
-              },
-              {
-                "name": "min_created_at",
-                "value": "={{ $now.minus({ days: 7 }).startOf('day').toUTC().toISO() }}"
-              },
-              {
-                "name": "max_created_at",
-                "value": "={{ $now.minus({ days: 7 }).endOf('day').toUTC().toISO() }}"
-              },
-              {
-                "name": "googleDriveFolderId",
-                "value": "1jplKoFeo3xLShJFO4_MpPUVHfDr-cOwx"
-              },
-              {
-                "name": "googleSheetId",
-                "value": "1maCntXucpkj8MPV_w8Hi0NGvNka7r7aOvFTYilaqtis"
-              },
-              {
-                "name": "googleSheetName",
-                "value": "Guard_Retraining_Log"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "name": "Config",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 1,
-        "position": [
-          -2900,
-          880
-        ],
-        "id": "e8445960-944e-438f-b278-bcd37db23c5c"
-      },
-      {
-        "parameters": {
-          "inputField": "={{$json.guards}}",
-          "options": {}
-        },
-        "name": "Loop Over Guards",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 1,
-        "position": [
-          -2680,
-          880
-        ],
-        "id": "6c40ac8e-2751-42a2-8c17-26ad4558e742"
-      },
-      {
-        "parameters": {
-          "authentication": "headerAuth",
-          "url": "https://api.smith.langchain.com/feedback",
-          "options": {},
-          "queryParametersUi": {
-            "parameter": [
-              {
-                "name": "min_created_at",
-                "value": "={{$node[\"Config\"].json.min_created_at}}"
-              },
-              {
-                "name": "max_created_at",
-                "value": "={{$node[\"Config\"].json.max_created_at}}"
-              },
-              {
-                "name": "name",
-                "value": "={{$json.guardApiName}}"
-              },
-              {
-                "name": "limit",
-                "value": 100
-              },
-              {
-                "name": "key",
-                "value": "trip_validity"
-              },
-              {
-                "name": "score",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "name": "Get Initial Feedback",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 1,
-        "position": [
-          -2460,
-          880
-        ],
-        "id": "b284669f-1167-4af9-80e2-103a95310d11",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "n8q4SoUNfqLxTSkB",
-            "name": "x-api-key"
-          }
+  "name": "AnneY_LangSmith_RefineGuardPrompt_GDocs",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
         }
       },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{$json.length}}",
-                "operation": "notEqual",
-                "value2": 0
-              }
-            ]
-          }
-        },
-        "name": "Check for Records",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 1,
-        "position": [
-          -2240,
-          880
-        ],
-        "id": "b9c17e0c-74e4-4bdf-8fa3-381ba5422de7"
-      },
-      {
-        "parameters": {
-          "inputField": "={{$json.body}}",
-          "options": {}
-        },
-        "name": "Loop Through All Feedback",
-        "type": "n8n-nodes-base.splitInBatches",
-        "typeVersion": 1,
-        "position": [
-          -2020,
-          780
-        ],
-        "id": "a9b8c7d6-e5f4-a3b2-c1d0-e9f8a7b6c5d4"
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{$json.value}}",
-                "operation": "equal",
-                "value2": "false positive"
-              }
-            ]
-          }
-        },
-        "name": "Is False Positive?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 1,
-        "position": [
-          -1880,
-          780
-        ],
-        "id": "f1e2d3c4-b5a6-f7e8-d9c0-b1a2c3d4e5f6"
-      },
-      {
-        "parameters": {
-          "authentication": "oAuth2",
-          "operation": "append",
-          "options": {}
-        },
-        "name": "Log 'No Records'",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 1,
-        "position": [
-          -2020,
-          980
-        ],
-        "id": "777f2477-633a-491b-9a92-2ae15ab5a7ca"
-      },
-      {
-        "parameters": {
-          "authentication": "oAuth2",
-          "operation": "download",
-          "fileId": "={{$node[\"Find Guard Prompt By Name\"].json[\"id\"]}}",
-          "options": {}
-        },
-        "name": "Get Original Guard Prompt",
-        "type": "n8n-nodes-base.googleDrive",
-        "typeVersion": 1,
-        "position": [
-          -1520,
-          780
-        ],
-        "id": "d3dd9157-5c05-4753-9de8-4bf94be22ce8"
-      },
-      {
-        "parameters": {
-          "authentication": "headerAuth",
-          "url": "=https://api.smith.langchain.com/runs/{{$json.run_id}}",
-          "options": {}
-        },
-        "name": "Get Run Details",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 1,
-        "position": [
-          -1180,
-          780
-        ],
-        "id": "28b5ca14-c645-407d-ac9b-f1abd017fff4"
-      },
-      {
-        "parameters": {
-          "authentication": "headerAuth",
-          "url": "https://api.smith.langchain.com/feedback",
-          "jsonParameters": true,
-          "options": {}
-        },
-        "name": "Get All Feedback For Run",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 1,
-        "position": [
-          -960,
-          780
-        ],
-        "id": "f6587d85-2054-4f33-971f-1f0f1b79d1fa"
-      },
-      {
-        "parameters": {
-          "batching": {}
-        },
-        "name": "LLM 1: Analyze & Generate Example",
-        "type": "@n8n/n8n-nodes-langchain.chainLlm",
-        "typeVersion": 1.7,
-        "position": [
-          -740,
-          780
-        ],
-        "id": "11bf0838-10ba-4486-9103-edbdf7cac7d3"
-      },
-      {
-        "parameters": {
-          "batching": {}
-        },
-        "name": "LLM 2: Refine Prompt",
-        "type": "@n8n/n8n-nodes-langchain.chainLlm",
-        "typeVersion": 1.7,
-        "position": [
-          -840,
-          520
-        ],
-        "id": "7aacd382-1300-43b4-b9ee-af415a3c9fdf"
-      },
-      {
-        "parameters": {
-          "authentication": "oAuth2",
-          "folderId": "={{$node[\"Config\"].json.googleDriveFolderId}}",
-          "title": "={{$node[\"Combine Data\"].json.guardName}} - Prompt Update - {{ $now.toFormat('yyyy-MM-dd') }}"
-        },
-        "name": "Create Google Doc",
-        "type": "n8n-nodes-base.googleDocs",
-        "typeVersion": 1,
-        "position": [
-          -620,
-          520
-        ],
-        "id": "99417552-0d27-4b2f-be2a-8e1a66239d3b"
-      },
-      {
-        "parameters": {
-          "authentication": "oAuth2",
-          "operation": "append",
-          "options": {}
-        },
-        "name": "Log Success",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 1,
-        "position": [
-          -400,
-          520
-        ],
-        "id": "dbc78b38-b4a6-40ff-9cb0-3afcefbb3329"
-      },
-      {
-        "parameters": {},
-        "name": "Error Trigger",
-        "type": "n8n-nodes-base.errorTrigger",
-        "typeVersion": 1,
-        "position": [
-          -2900,
-          1180
-        ],
-        "id": "c2cc26af-e04a-434b-a5e7-72aee90d91f7"
-      },
-      {
-        "parameters": {},
-        "name": "Prepare for Final Refinement",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 1,
-        "position": [
-          -1020,
-          520
-        ],
-        "id": "ee5ec735-4f71-45df-b54c-4cd3d718b539"
-      },
-      {
-        "parameters": {},
-        "name": "Combine Data",
-        "type": "n8n-nodes-base.merge",
-        "typeVersion": 1,
-        "position": [
-          -1360,
-          780
-        ],
-        "id": "ee21bc43-ffb9-40df-b4bf-07b4517a085d"
-      },
-      {
-        "parameters": {
-          "authentication": "oAuth2",
-          "operation": "list",
-          "options": {
-            "q": "name = '{{$json.guardFileName}}' and '{{$node[\"Config\"].json.googleDriveFolderId}}' in parents"
-          }
-        },
-        "name": "Find Guard Prompt By Name",
-        "type": "n8n-nodes-base.googleDrive",
-        "typeVersion": 1,
-        "position": [
-          -1700,
-          780
-        ],
-        "id": "bd9a6c79-1176-4326-a3e9-3200b48be956"
-      },
-      {
-        "parameters": {
-          "modelName": "models/gemini-1.5-flash",
-          "options": {}
-        },
-        "name": "Google Gemini Chat Model",
-        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-        "typeVersion": 1,
-        "position": [
-          -740,
-          420
-        ],
-        "id": "5253b528-0297-49e8-b640-dc59f4c8c345"
-      }
-    ],
-    "pinData": {},
-    "connections": {
-      "Schedule Trigger (12am EST)": {
-        "main": [
-          [
+      "name": "Schedule Trigger (12am EST)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2760,
+        280
+      ],
+      "id": "9890231c-c314-4486-93af-cad82219b318"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
             {
-              "node": "Config",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Config": {
-        "main": [
-          [
-            {
-              "node": "Loop Over Guards",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Loop Over Guards": {
-        "main": [
-          [
-            {
-              "node": "Get Initial Feedback",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Initial Feedback": {
-        "main": [
-          [
-            {
-              "node": "Check for Records",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Check for Records": {
-        "main": [
-          [
-            {
-              "node": "Loop Through All Feedback",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Log 'No Records'",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Loop Through All Feedback": {
-        "main": [
-          [
-            {
-              "node": "Is False Positive?",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Is False Positive?": {
-        "main": [
-          [
-            {
-              "node": "Find Guard Prompt By Name",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Original Guard Prompt": {
-        "main": [
-          [
-            {
-              "node": "Combine Data",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Run Details": {
-        "main": [
-          [
-            {
-              "node": "Get All Feedback For Run",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get All Feedback For Run": {
-        "main": [
-          [
-            {
-              "node": "LLM 1: Analyze & Generate Example",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "LLM 2: Refine Prompt": {
-        "main": [
-          [
-            {
-              "node": "Create Google Doc",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Create Google Doc": {
-        "main": [
-          [
-            {
-              "node": "Log Success",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Combine Data": {
-        "main": [
-          [
-            {
-              "node": "Get Run Details",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Find Guard Prompt By Name": {
-        "main": [
-          [
-            {
-              "node": "Get Original Guard Prompt",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Google Gemini Chat Model": {
-        "ai_languageModel": [
-          [
-            {
-              "node": "LLM 1: Analyze & Generate Example",
-              "type": "ai_languageModel",
-              "index": 0
+              "name": "guards",
+              "value": "={{ [\n  {\n    \"guardApiName\": \"tool_supevisor\",\n    \"guardFileName\": \"tool_supevisor_node.txt\"\n  },\n  {\n    \"guardApiName\": \"human_assistant_guard_agentic\",\n    \"guardFileName\": \"human_assistant_guard_agentic.txt\"\n  },\n  {\n    \"guardApiName\": \"unusual_prompt_agentic\",\n    \"guardFileName\": \"unusual_prompt_agentic_prompt.txt\"\n  },\n  {\n    \"guardApiName\": \"agentic_knowledge_base\",\n    \"guardFileName\": \"agentic_knowledge_base.txt\"\n  },\n  {\n    \"guardApiName\": \"qa_bot\",\n    \"guardFileName\": \"qa_bot_node.txt\"\n  },\n  {\n    \"guardApiName\": \"financial_advice_guard_agentic\",\n    \"guardFileName\": \"financial_guard_prompt.txt\"\n  },\n  {\n    \"guardApiName\": \"system_instruction_agentic\",\n    \"guardFileName\": \"system_instructions.txt\"\n  },\n  {\n    \"guardApiName\": \"conversational_hallucination_agentic\",\n    \"guardFileName\": \"hallucination_guard_prompt.txt\"\n  }\n] }}"
             },
             {
-              "node": "LLM 2: Refine Prompt",
-              "type": "ai_languageModel",
-              "index": 0
+              "name": "min_created_at",
+              "value": "2025-07-16T00:00:00.000Z"
+            },
+            {
+              "name": "max_created_at",
+              "value": "2025-07-16T23:59:59.999Z"
+            },
+            {
+              "name": "googleDriveFolderId",
+              "value": "1jplKoFeo3xLShJFO4_MpPUVHfDr-cOwx"
+            },
+            {
+              "name": "googleSheetId",
+              "value": "1maCntXucpkj8MPV_w8Hi0NGvNka7r7aOvFTYilaqtis"
+            },
+            {
+              "name": "googleSheetName",
+              "value": "Guard_Retraining_Log"
             }
           ]
+        },
+        "options": {}
+      },
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -2540,
+        280
+      ],
+      "id": "b46da2ab-44dd-4717-aacf-07ec7921ec66"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://api.smith.langchain.com/feedback",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "min_created_at",
+              "value": "={{$node[\"Config\"].json.min_created_at}}"
+            },
+            {
+              "name": "max_created_at",
+              "value": "={{$node[\"Config\"].json.max_created_at}}"
+            },
+            {
+              "name": "limit",
+              "value": 100
+            },
+            {
+              "name": "key",
+              "value": "trip_validity"
+            },
+            {
+              "name": "score",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "name": "Get Initial Feedback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -2320,
+        280
+      ],
+      "id": "30406369-1575-4bcd-9483-7a481723597b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "n8q4SoUNfqLxTSkB",
+          "name": "x-api-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.length}}",
+              "operation": "notEqual",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Check for Records",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -2100,
+        280
+      ],
+      "id": "933b2b90-d047-4d11-9f8c-5c3e4db7686b"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Loop Through All Feedback",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -1640,
+        180
+      ],
+      "id": "fd658abb-d43c-42ba-80a5-9fceebdbec88"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "append",
+        "options": {}
+      },
+      "name": "Log 'No Records'",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        380
+      ],
+      "id": "b73c31f4-99ed-49a4-b49e-839f89d9c4c2"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "download",
+        "fileId": "={{$node[\"Find Guard Prompt By Name\"].json.id}}",
+        "options": {}
+      },
+      "name": "Get Original Guard Prompt",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        180
+      ],
+      "id": "9f5b8484-1de0-4072-9acc-9164a627ea7a"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "name": "LLM 1: Analyze & Generate Example",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -340,
+        180
+      ],
+      "id": "850be8bf-d04f-4f39-9dff-0d17fd1254f0"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "name": "LLM 2: Refine Prompt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        36,
+        180
+      ],
+      "id": "ce2ec5aa-ce66-4352-981c-5a085ae079dc"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "folderId": "={{$node[\"Config\"].json.googleDriveFolderId}}",
+        "title": "={{$node[\"Combine Data\"].json.guardName}} - Prompt Update - {{ $now.toFormat('yyyy-MM-dd') }}"
+      },
+      "name": "Create Google Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 1,
+      "position": [
+        412,
+        180
+      ],
+      "id": "63282275-241b-4802-b3ff-5a3145df92ae"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "append",
+        "options": {}
+      },
+      "name": "Log Success",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        632,
+        180
+      ],
+      "id": "97a68357-f33a-4a30-b125-64584546c9db"
+    },
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2760,
+        640
+      ],
+      "id": "1fc8135f-cf98-44c1-bb53-eb6786841b34"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "search"
+      },
+      "name": "Find Guard Prompt By Name",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        180
+      ],
+      "id": "3f7dce67-1dd3-4e59-b5fb-0ed2036a6fc6"
+    },
+    {
+      "parameters": {},
+      "name": "Find Guard File Name",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        180
+      ],
+      "id": "d1aa2978-9ce4-458b-bd2e-005825d94daa"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{typeof $json}}",
+              "value2": "object"
+            }
+          ]
+        }
+      },
+      "name": "Is Feedback an Object?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        180
+      ],
+      "id": "e48f4b12-df13-4f3b-8894-527835113aa3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.smith.langchain.com/api/v1/runs/query",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"id\": [\"{{ $json.id }}\"] }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1220,
+        180
+      ],
+      "id": "33c298ce-eb7d-48ef-82b7-ebe0519e0fde",
+      "name": "Get Run Details",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "n8q4SoUNfqLxTSkB",
+          "name": "x-api-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const runId = $input.item.json[0].run_id;\nconst requestBody = { id: [runId] };\n\nreturn requestBody;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        180
+      ],
+      "id": "745dfa36-334f-4e76-b6e2-a8d29f9fd6b5",
+      "name": "Prepare Post Body"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (12am EST)": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
         ]
-      }
+      ]
     },
-    "active": false,
-    "settings": {
-      "executionOrder": "v1"
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Get Initial Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "versionId": "0f3d4109-952d-4eab-8474-f1f721a0019f",
-    "meta": {
-      "templateCredsSetupCompleted": true,
-      "instanceId": "371eeabae1bc66baa92b2fb66b3ad10012ef11e20b9f55516de501be4b6b1e56"
+    "Get Initial Feedback": {
+      "main": [
+        [
+          {
+            "node": "Check for Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "id": "x7GAJhKqdVT111xH",
-    "tags": [
-      {
-        "createdAt": "2025-07-16T00:31:12.618Z",
-        "updatedAt": "2025-07-16T00:31:12.618Z",
-        "id": "Xymmi8tljxqOwL3h",
-        "name": "Langsmith"
-      }
-    ]
-  }
+    "Check for Records": {
+      "main": [
+        [
+          {
+            "node": "Is Feedback an Object?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log 'No Records'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through All Feedback": {
+      "main": [
+        [
+          {
+            "node": "Prepare Post Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Guard File Name": {
+      "main": [
+        [
+          {
+            "node": "Find Guard Prompt By Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Guard Prompt By Name": {
+      "main": [
+        [
+          {
+            "node": "Get Original Guard Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Feedback an Object?": {
+      "main": [
+        [
+          {
+            "node": "Loop Through All Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Original Guard Prompt": {
+      "main": [
+        [
+          {
+            "node": "LLM 1: Analyze & Generate Example",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM 1: Analyze & Generate Example": {
+      "main": [
+        [
+          {
+            "node": "LLM 2: Refine Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM 2: Refine Prompt": {
+      "main": [
+        [
+          {
+            "node": "Create Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Run Details": {
+      "main": [
+        [
+          {
+            "node": "Find Guard File Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Post Body": {
+      "main": [
+        [
+          {
+            "node": "Get Run Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4eee3501-fb1c-4bf1-99f0-0080eeeb7338",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "371eeabae1bc66baa92b2fb66b3ad10012ef11e20b9f55516de501be4b6b1e56"
+  },
+  "id": "x7GAJhKqdVT111xH",
+  "tags": [
+    {
+      "createdAt": "2025-07-16T00:31:12.618Z",
+      "updatedAt": "2025-07-16T00:31:12.618Z",
+      "id": "Xymmi8tljxqOwL3h",
+      "name": "Langsmith"
+    }
+  ]
+}
