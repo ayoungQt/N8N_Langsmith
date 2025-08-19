@@ -1,3 +1,30 @@
+### 2025-08-19
+
+- feat(analysis): Aggregate multiple feedback examples per guard into numbered lists in `Final Assemble Case File` (`user_input`, `bot_error`) so downstream analysis sees all cases
+- feat(audit): Appended evidence footer to LLM 1 prompt; model now outputs `{"examples_used":[...],"total_examples":N}` to prove multi-example coverage
+- chore(models): Tuned temperatures (LLM 1 ≈ 0.2 for deterministic analysis; LLM 2 ≈ 0.3–0.4 for refinement)
+- fix(duplication): Removed model fan-out (no data line into model nodes); ensured 1 item per guard end-to-end (LLM 1 → LLM 2 → Docs → Sheets)
+- fix(docs): Title pulls guard file name from upstream (no `[0]`), adds ISO date; verified 3 unique docs for 3 guards
+- fix(sheets): Hyperlink formula with USER_ENTERED input mode and per-item `documentId`/`id`; per-row guard name expression fixed (no `[0]`)
+- docs(prompts): Kept Case File section intact (Verdict/Category/Reasoning/Analyst’s Note); appended instructions to cite multiple numbered examples
+
+### 2025-08-18
+
+- feat(workflow): consolidate multi-feedback per guard into a single case file; aggregate user_input and bot_error across runs
+- feat(workflow): decode original guard prompt to text via `Reformat Original Guard` and feed into LLM 1
+- fix(google-drive): ensure one file per guard by filtering name and folder, Return All off, Limit 1; verified 3 guards found and downloaded
+- fix(expressions): switch from node-indexed `$items(...)[0]` to per-item `$('Node').item` references across nodes to respect n8n auto-looping
+- fix(LLM): replace legacy false_positive fields with `verdict`, `false_positive_category`, and `reasoning`; updated LLM 1 prompt body accordingly
+- fix(LLM): remove hardcoded guard label in report headers; make guard name dynamic from `guardApiName`
+- chore(validation): added temporary debug fields (currentGuard, itemIndex, uniqueGuardNames) to validate grouping; removed after verification
+
+### YYYY-MM-DD
+
+-   **refactor(workflow):** Rearchitected the core data processing logic to group feedback by guard name before processing.
+-   **feat(workflow):** Replaced the one-item-at-a-time loop with a more efficient data aggregation step using a `Code` node. This ensures all feedback for a single guard is consolidated.
+-   **fix(expressions):** Updated numerous expressions throughout the workflow to correctly map and join data from the new grouped data structure (e.g., combining multiple `reasoning` texts into one).
+-   **fix(looping):** Diagnosed and identified the root cause of the workflow processing the same guard multiple times; expressions were incorrectly referencing a node outside the main processing loop.
+
 ### Technical Change Log
 
 **Date:** July 20, 2024

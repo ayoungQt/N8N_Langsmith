@@ -1,3 +1,57 @@
+**Date:** 2025-08-19
+
+**Status:** Stable multi-guard retraining with multi-example analysis and clean outputs
+
+**What changed today**
+- The workflow now consolidates multiple feedback items per guard and analyzes them as numbered examples. This yields higher-quality, pattern-based insights instead of single-case summaries.
+- Added a lightweight audit footer to the analysis so we can verify the model actually used several examples (`examples_used`, `total_examples`).
+- Fixed prior duplication issues by isolating model inputs and ensuring the chain runs once per guard only.
+- Improved document naming (guard + ISO date) and Google Sheets logging (clickable links, correct guard names per row).
+
+**Impact**
+- More reliable guard refinements due to aggregated evidence.
+- Faster review and better traceability via explicit evidence output.
+- Clean, one‑per‑guard outputs: exactly one doc and one sheet row per guard.
+
+**Next**
+- Optionally enforce minimum coverage (≥3 examples) by parsing `examples_used` and retrying if insufficient.
+- Add a friendly display name mapping for guards in logs and docs.
+
+---
+
+**Date:** 2025-08-18
+
+**Status:** Significant progress; multi-guard retraining flow validated end-to-end
+
+**Highlights:**
+- The workflow now groups multiple feedback items per guard and produces one consolidated retraining document per guard (validated with 3 guards in a single run).
+- Drive search reliably locates the correct guard prompt file per guard (name + folder filter), and downloads succeed for all items.
+- The case file assembly now includes aggregated user inputs and bot errors per guard, giving better context for refinement.
+- LLM prompt updated to use decoded guard prompt text and new feedback fields (`verdict`, `false_positive_category`, `reasoning`), replacing deprecated fields.
+- Google Sheets logging writes one row per guard with dynamic doc links; clickable links confirmed.
+
+**Impact:**
+- Eliminates duplicate document creation per guard; improves reviewer efficiency and consistency.
+- More accurate analysis due to full context of all related feedback per guard.
+- Reduces manual intervention by automating file discovery and robust logging.
+
+**Next Focus:**
+- Polish presentation in the case file (optional numbering/limits for long lists).
+- Add friendly display names for guards (mapping) where needed.
+- Parameterize the date window calc (already added) and consider holiday calendars for business-day offsets.
+
+---
+
+**Status:** In Progress
+
+**Summary:**
+
+The automated guard retraining workflow has been significantly upgraded to handle feedback more intelligently. Previously, if five feedback items were found for the "Financial Guard," the system would incorrectly try to create five separate new documents.
+
+The system now correctly consolidates all feedback for each specific guard. If it finds six feedback items for the "Human Assistant Guard" and three for the "Hallucination Guard," it will now correctly generate only two new documents: one master document for each guard, containing all relevant feedback. This makes the retraining process much more efficient and produces the desired outcome.
+
+We have identified the final bug preventing this from working perfectly and are ready to implement the fix.
+
 ### **Business Progress Report**
 
 **Date:** July 20, 2024

@@ -1,5 +1,5 @@
 {
-  "name": "AnneY_LangSmith_RefineGuardPrompt_GDocs",
+  "name": "AnneY_LangSmith_RefineGuardPrompt_GDocs experimental",
   "nodes": [
     {
       "parameters": {
@@ -13,10 +13,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [
-        -2760,
-        280
+        -1480,
+        -440
       ],
-      "id": "9890231c-c314-4486-93af-cad82219b318"
+      "id": "a020f65d-bb30-40cc-8564-b2132b4cea78"
     },
     {
       "parameters": {
@@ -54,76 +54,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
       "position": [
-        -2540,
-        280
+        -1260,
+        -440
       ],
-      "id": "b46da2ab-44dd-4717-aacf-07ec7921ec66"
-    },
-    {
-      "parameters": {
-        "authentication": "headerAuth",
-        "url": "https://api.smith.langchain.com/feedback",
-        "options": {},
-        "queryParametersUi": {
-          "parameter": [
-            {
-              "name": "min_created_at",
-              "value": "={{$node[\"Config\"].json.min_created_at}}"
-            },
-            {
-              "name": "max_created_at",
-              "value": "={{$node[\"Config\"].json.max_created_at}}"
-            },
-            {
-              "name": "limit",
-              "value": 100
-            },
-            {
-              "name": "key",
-              "value": "trip_validity"
-            },
-            {
-              "name": "score",
-              "value": 1
-            }
-          ]
-        }
-      },
-      "name": "Get Initial Feedback",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 1,
-      "position": [
-        -2320,
-        280
-      ],
-      "id": "30406369-1575-4bcd-9483-7a481723597b",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "n8q4SoUNfqLxTSkB",
-          "name": "x-api-key"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "boolean": [
-            {
-              "value1": "={{$json.length}}",
-              "operation": "notEqual",
-              "value2": 0
-            }
-          ]
-        }
-      },
-      "name": "Check for Records",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        -2100,
-        280
-      ],
-      "id": "933b2b90-d047-4d11-9f8c-5c3e4db7686b"
+      "id": "a8c789c3-4f82-482d-82ee-cc7ee1651f6b"
     },
     {
       "parameters": {
@@ -133,133 +67,130 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        -1640,
-        180
+        -160,
+        -540
       ],
-      "id": "fd658abb-d43c-42ba-80a5-9fceebdbec88"
+      "id": "d1eefa43-7393-45ed-a549-3e5b0718ab9d"
     },
     {
       "parameters": {
         "authentication": "oAuth2",
         "operation": "append",
-        "options": {}
+        "sheetId": "1maCntXucpkj8MPV_w8Hi0NGvNka7r7aOvFTYilaqtis",
+        "options": {
+          "usePathForKeyRow": true,
+          "valueInputMode": "USER_ENTERED"
+        }
       },
       "name": "Log 'No Records'",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 1,
       "position": [
-        -1880,
-        380
+        -380,
+        -340
       ],
-      "id": "b73c31f4-99ed-49a4-b49e-839f89d9c4c2"
+      "id": "2169a10e-b47d-4c08-a15e-fdc8ab5fd21c",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VwROdoHFEpdS7CNt",
+          "name": "Google Sheets account 53"
+        }
+      }
     },
     {
       "parameters": {
-        "authentication": "oAuth2",
-        "operation": "download",
-        "fileId": "={{$node[\"Find Guard Prompt By Name\"].json.id}}",
-        "options": {}
-      },
-      "name": "Get Original Guard Prompt",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 1,
-      "position": [
-        -560,
-        180
-      ],
-      "id": "9f5b8484-1de0-4072-9acc-9164a627ea7a"
-    },
-    {
-      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following case file:\n\nCase File\n1. The Original Guard Prompt:\n{{ $json.original_guard_prompt }}\n2. The User's Input that Caused the Failure:\n{{ $json.user_input }}\n3. The Bot's Failed Response / Error:\n{{ $json.bot_error }}\n4. Human Feedback on the Failure:\nFalse Positive Reason: {{ $json.false_positive_reason_value }}\nRecommended Action: {{ $json.recommended_action }}\nAnalyst's Note: {{ $json.analyst_note }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert AI quality analyst specializing in refining LLM guardrails. Your task is to analyze a failed interaction and provide specific, actionable recommendations to improve a guard prompt.  Based on the case file provided in the user message, provide a set of clear, actionable recommendations. The recommendations should be designed to prevent this specific type of failure in the future.  Focus your recommendations on: Clarifying Instructions: Can the prompt's instructions be made more precise? Adding Few-Shot Examples: Should specific examples of what to allow or block be added? Adjusting Critical Language: Is there a word or phrase that is too strict or too broad?  Please format your output as a list of recommendations."
+            }
+          ]
+        },
         "batching": {}
       },
       "name": "LLM 1: Analyze & Generate Example",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        -340,
-        180
+        1380,
+        -540
       ],
-      "id": "850be8bf-d04f-4f39-9dff-0d17fd1254f0"
+      "id": "44cc2434-fdee-4410-a3e7-adcdd9607a1e",
+      "retryOnFail": true,
+      "alwaysOutputData": false
     },
     {
       "parameters": {
+        "promptType": "define",
+        "text": "=Original Guard Prompt:\n---\n{{ $json.decoded_original_guard_prompt }}\n---\n\nRecommendations for Improvement:\n---\n{{ $json.recommendations }}\n---\n\nBased on the above, provide the new, refined guard prompt.\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert AI guardrail prompt refiner. Your task is to take an existing guard prompt and a set of recommendations for improvement, and then generate a new, refined version of the guard prompt.  The new prompt should incorporate all actionable recommendations provided, while maintaining the original intent and core functionality of the guardrail. Focus on clarity, precision, and effectiveness based on the feedback.  Ensure your output is *only* the complete, new guard prompt. Do not include any conversational text, introductions, or explanations outside of the prompt itself."
+            }
+          ]
+        },
         "batching": {}
       },
       "name": "LLM 2: Refine Prompt",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        36,
-        180
+        1976,
+        -540
       ],
-      "id": "ce2ec5aa-ce66-4352-981c-5a085ae079dc"
+      "id": "ccf32e11-c5b7-4a2d-ab6c-742c32e2f101"
     },
     {
       "parameters": {
         "authentication": "oAuth2",
-        "folderId": "={{$node[\"Config\"].json.googleDriveFolderId}}",
-        "title": "={{$node[\"Combine Data\"].json.guardName}} - Prompt Update - {{ $now.toFormat('yyyy-MM-dd') }}"
+        "folderId": "1ubLE1KX4clgc_71LWTfqqBIl4B6UMOXe",
+        "title": "={{ $('Search Guard Filename').item.json.filename }}- Refined Prompt - {{ new Date().toISOString().split('T')[0] }}"
       },
       "name": "Create Google Doc",
       "type": "n8n-nodes-base.googleDocs",
       "typeVersion": 1,
       "position": [
-        412,
-        180
+        2352,
+        -540
       ],
-      "id": "63282275-241b-4802-b3ff-5a3145df92ae"
+      "id": "ddfa3748-87ec-4044-824e-3b525aed975c",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "bZYwtvOmFl03Ndmz",
+          "name": "Google Docs account 22"
+        }
+      }
     },
     {
       "parameters": {
         "authentication": "oAuth2",
         "operation": "append",
-        "options": {}
+        "sheetId": "1maCntXucpkj8MPV_w8Hi0NGvNka7r7aOvFTYilaqtis",
+        "options": {
+          "usePathForKeyRow": false
+        }
       },
       "name": "Log Success",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 1,
       "position": [
-        632,
-        180
+        2792,
+        -540
       ],
-      "id": "97a68357-f33a-4a30-b125-64584546c9db"
-    },
-    {
-      "parameters": {},
-      "name": "Error Trigger",
-      "type": "n8n-nodes-base.errorTrigger",
-      "typeVersion": 1,
-      "position": [
-        -2760,
-        640
-      ],
-      "id": "1fc8135f-cf98-44c1-bb53-eb6786841b34"
-    },
-    {
-      "parameters": {
-        "authentication": "oAuth2",
-        "operation": "search"
-      },
-      "name": "Find Guard Prompt By Name",
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 1,
-      "position": [
-        -780,
-        180
-      ],
-      "id": "3f7dce67-1dd3-4e59-b5fb-0ed2036a6fc6"
-    },
-    {
-      "parameters": {},
-      "name": "Find Guard File Name",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [
-        -1000,
-        180
-      ],
-      "id": "d1aa2978-9ce4-458b-bd2e-005825d94daa"
+      "id": "0a863d3c-3bc4-44d7-a8db-69babd7ff516",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VwROdoHFEpdS7CNt",
+          "name": "Google Sheets account 53"
+        }
+      }
     },
     {
       "parameters": {
@@ -276,10 +207,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -1880,
-        180
+        -380,
+        -540
       ],
-      "id": "e48f4b12-df13-4f3b-8894-527835113aa3"
+      "id": "37fb2a6a-fe92-4d76-b18f-8bdf7c839cfa"
     },
     {
       "parameters": {
@@ -289,16 +220,16 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"id\": [\"{{ $json.id }}\"] }",
+        "jsonBody": "={ \"id\": [\"{{ $json.run_id }}\"] }",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1220,
-        180
+        60,
+        -540
       ],
-      "id": "33c298ce-eb7d-48ef-82b7-ebe0519e0fde",
+      "id": "c594e4b7-ee23-42e9-a152-5c76a88db5c4",
       "name": "Get Run Details",
       "credentials": {
         "httpHeaderAuth": {
@@ -309,16 +240,396 @@
     },
     {
       "parameters": {
-        "jsCode": "const runId = $input.item.json[0].run_id;\nconst requestBody = { id: [runId] };\n\nreturn requestBody;\n"
+        "resource": "fileFolder",
+        "queryString": "={{ $json.filename }}",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1jplKoFeo3xLShJFO4_MpPUVHfDr-cOwx",
+            "mode": "list",
+            "cachedResultName": "N8N Guard Documents",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1jplKoFeo3xLShJFO4_MpPUVHfDr-cOwx"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        500,
+        -540
+      ],
+      "id": "75c47540-4192-4212-8c38-63296b001f15",
+      "name": "Google Drive",
+      "retryOnFail": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Ex3K3m0UPoOVEuw4",
+          "name": "Google Drive account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the list of all possible guards from the Config node.\nconst allGuards = $('Config').first().json.guards;\nconsole.log(allGuards);\n\n// Get the current item from the input. This item comes from 'Get Run Details'.\nconst item = $input.first().json.runs[0];\nconsole.log(item);\n\n// Get name property of current run\nconst itemName = item.name;\nconsole.log(itemName);\n\n\n  // Find the guard from our list where its apiName is part of the run's name.\n  const foundGuard = allGuards.find(guard => itemName.includes(guard.guardApiName));\n\nconsole.log(foundGuard);\n\nlet returnObject = { \"filename\" : null };\nif(foundGuard)\n{\n  returnObject.filename = foundGuard.guardFileName;\n}\n\nreturn returnObject;\n\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1440,
-        180
+        280,
+        -540
       ],
-      "id": "745dfa36-334f-4e76-b6e2-a8d29f9fd6b5",
-      "name": "Prepare Post Body"
+      "id": "64970524-5826-43a1-8268-80c395988321",
+      "name": "Search Guard Filename"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1468,
+        -320
+      ],
+      "id": "258d7179-fc0d-4991-83ce-9308ff8d5290",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IAOSnVGtnpDaPeeX",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.smith.langchain.com/api/v1/feedback?key=trip_validity&key=recommended_action&key=false_positive_reason&key=note",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "min_created_at",
+              "value": "={{ $json.min_created_at }}"
+            },
+            {
+              "name": "max_created_at",
+              "value": "={{ $json.max_created_at }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1040,
+        -440
+      ],
+      "id": "68bb03df-1f7f-43fb-b069-7081545674ee",
+      "name": "Langsmith Feedback",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "n8q4SoUNfqLxTSkB",
+          "name": "x-api-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c204e765-08ef-4fd1-a499-cf32a0ffb7b3",
+              "leftValue": "={{ $items.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -600,
+        -440
+      ],
+      "id": "50257921-deaf-4833-aaa0-3de1ce5877c2",
+      "name": "Check for Records"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This object will temporarily store our merged records, using the run_id as the key.\nconst groupedRuns = {};\n\n// The previous node provides a flat list of all feedback items.\n// We can loop through them directly.\nfor (const item of $input.all()) {\n  // Ensure the item has a json property before proceeding.\n  if (!item.json) {\n    continue;\n  }\n  const runId = item.json.run_id;\n\n  // Skip any items that might not have a run_id.\n  if (!runId) {\n    continue;\n  }\n\n  // If we haven't seen this run_id before, create the base record for it.\n  if (!groupedRuns[runId]) {\n    groupedRuns[runId] = {\n      run_id: item.json.run_id,\n      session_id: item.json.session_id,\n      trace_id: item.json.trace_id,\n      created_at: item.json.created_at, // Note: This will be the timestamp of the first feedback item encountered for this run.\n      feedback_source: item.json.feedback_source,\n    };\n  }\n\n  // Get the specific feedback key (e.g., \"note\", \"trip_validity\").\n  const key = item.json.key;\n\n  // Add the feedback as a new property on our grouped record.\n  // We handle the \"note\" key differently, as its main content is in the \"comment\" field.\n  if (key === 'note') {\n    groupedRuns[runId][key] = item.json.comment;\n  } else {\n    // For all other keys, we create an object containing both the value and the score.\n    groupedRuns[runId][key] = {\n      value: item.json.value,\n      score: item.json.score\n    };\n  }\n}\n\n// Convert the temporary object into an array of all merged records.\nconst allMergedRecords = Object.values(groupedRuns);\n\n// --- NEW: Filter the records ---\n// Only keep the records that have the 'false_positive_reason' key.\nconst filteredRecords = allMergedRecords.filter(record => {\n  return record.hasOwnProperty('false_positive_reason');\n});\n\n// Return the final, filtered list.\nreturn filteredRecords;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -820,
+        -440
+      ],
+      "id": "79ca2081-3ee7-48a3-bfa4-b83632c65ef9",
+      "name": "Group by Run ID"
+    },
+    {
+      "parameters": {
+        "content": "## Workflow Configuration\n\nThis node sets the global configuration parameters for the workflow. It contains configs for the following:\n\n🗓️ Date Range\n📄 Document IDs\n🛡️ Guard & Feedback Names",
+        "height": 400,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1330,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "f0e0fef1-c222-41af-9acf-3f2439390fed",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Get All Feedback (HTTP Request)\nThis node fetches all feedback records from the LangSmith API within the specified date range, using automatic pagination to get all pages.",
+        "height": 460,
+        "width": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1090,
+        -740
+      ],
+      "typeVersion": 1,
+      "id": "6b07514a-ba0d-4444-a4f3-b4224e90054c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Merge and Filter Feedback (Code)\nDouble click to edit me. Guide\n\nThis node groups all feedback records by their run_id and then filters the result to only include records that contain a false_positive_reason.",
+        "height": 540,
+        "width": 200,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -870,
+        -820
+      ],
+      "typeVersion": 1,
+      "id": "5500f4f5-3591-45f9-8d14-dc12669e1156",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Records found? True/False\n\nIf yes, follow true path if false, follow false path",
+        "height": 520,
+        "width": 180,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -800
+      ],
+      "typeVersion": 1,
+      "id": "c3da8a90-287f-4d87-947e-cf2f2e4513b1",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        720,
+        -540
+      ],
+      "id": "8d8fcde9-804c-4e58-b552-c3f15d7e038e",
+      "name": "Download appropriate guard",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Ex3K3m0UPoOVEuw4",
+          "name": "Google Drive account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "73957e8f-68d5-4b4f-8a27-952dbcd426fb",
+              "name": "user_input",
+              "value": "={{ $items(\"Get Run Details\")[0].json.runs?.[0]?.inputs?.metadata?.conversation_transcript?.filter(item => item[0] === 'user')?.pop()?.[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "e6ed6bdc-1abf-46c9-8776-5b0b73ab9237",
+              "name": "bot_error",
+              "value": "={{ $items(\"Get Run Details\")[0].json.runs[0].outputs.error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "f0845baa-379d-4045-9a25-790f7a0b0df0",
+              "name": "false_positive_reason_value",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.false_positive_reason.value }}",
+              "type": "string"
+            },
+            {
+              "id": "28ed39b5-a812-4ec5-86ad-0bbf84c97d19",
+              "name": "recommended_action",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.recommended_action.value }}",
+              "type": "string"
+            },
+            {
+              "id": "7fb8a9ab-72f9-47f1-a62d-d0556bd0f3f4",
+              "name": "analyst_note",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.note }}",
+              "type": "string"
+            },
+            {
+              "id": "ba243098-8600-49e9-a269-94c3508db6c1",
+              "name": "decoded_original_guard_prompt",
+              "value": "={{ $items(\"Reformat Original Guard\")[0].json.decoded_original_guard_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "812b9f6c-4a81-4f47-8539-0b946f6e0ea3",
+              "name": "recommendations",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1756,
+        -540
+      ],
+      "id": "d44e4b5a-f163-4267-9251-ae52d0a0eaf8",
+      "name": "Final Assemble Case File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This node decodes the Base64 encoded 'original_guard_prompt'\n// received from the 'Assemble Case File' node into a readable string.\n\n// It's crucial for the LLM to receive plain text for proper processing.\n\n// Iterate over each item received by this node.\nfor (const item of items) {\n  try {\n    // Get the stringified JSON from the 'original_guard_prompt' field.\n    // Use optional chaining (?.) to prevent errors if the field is missing.\n    const stringifiedJson = item.json.original_guard_prompt;\n\n    // Check if the stringified JSON exists and is a string.\n    if (typeof stringifiedJson === 'string' && stringifiedJson) {\n      // Parse the stringified JSON to get the actual object.\n      const parsedData = JSON.parse(stringifiedJson);\n\n      // Now, get the Base64 encoded string from the 'data' property within the parsed object.\n      const encodedPrompt = parsedData.data;\n\n      // Check if the encoded prompt exists and is a string.\n      if (typeof encodedPrompt === 'string' && encodedPrompt) {\n        // Create a Buffer from the Base64 string and then convert it to a UTF-8 string.\n        // The '77u/' prefix is a Byte Order Mark (BOM) for UTF-8.\n        // We'll remove it if present, as it can sometimes cause display issues.\n        let decodedPrompt = Buffer.from(encodedPrompt, 'base64').toString('utf8');\n\n        // Remove the Byte Order Mark (BOM) if it exists at the beginning of the string.\n        // The BOM for UTF-8 is often represented as \\uFEFF.\n        if (decodedPrompt.charCodeAt(0) === 0xFEFF) {\n          decodedPrompt = decodedPrompt.substring(1);\n        }\n\n        // Add the decoded prompt to the current item's JSON data.\n        // We'll name this new field 'decoded_original_guard_prompt'.\n        item.json.decoded_original_guard_prompt = decodedPrompt;\n      } else {\n        // If the encoded prompt (data property) is missing or not a string, set the decoded field to null\n        // and log a warning.\n        item.json.decoded_original_guard_prompt = null;\n        console.warn(\"Warning: 'data' property within original_guard_prompt was missing or not a string. Setting decoded_original_guard_prompt to null.\");\n      }\n    } else {\n      // If the stringified JSON (original_guard_prompt) is missing or not a string, set the decoded field to null\n      // and log a warning.\n      item.json.decoded_original_guard_prompt = null;\n      console.warn(\"Warning: original_guard_prompt was missing or not a string. Setting decoded_original_guard_prompt to null.\");\n    }\n  } catch (error) {\n    // Catch any errors during parsing or decoding and set the field to null,\n    // also log the error for debugging.\n    item.json.decoded_original_guard_prompt = null;\n    console.error(`Error processing original_guard_prompt: ${error.message}`);\n  }\n}\n\n// Return the modified items.\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        -540
+      ],
+      "id": "432b5991-2563-4eb1-9095-ecc8f3ee1486",
+      "name": "Reformat Original Guard"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acd1a166-b6e2-4d13-96f4-b313b13cf6f8",
+              "name": "original_guard_prompt",
+              "value": "={{ $items(\"Download appropriate guard\")[0].binary.data }}",
+              "type": "string"
+            },
+            {
+              "id": "73957e8f-68d5-4b4f-8a27-952dbcd426fb",
+              "name": "user_input",
+              "value": "={{ $items(\"Get Run Details\")[0].json.runs?.[0]?.inputs?.metadata?.conversation_transcript?.filter(item => item[0] === 'user')?.pop()?.[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "e6ed6bdc-1abf-46c9-8776-5b0b73ab9237",
+              "name": "bot_error",
+              "value": "={{ $items(\"Get Run Details\")[0].json.runs[0].outputs.error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "f0845baa-379d-4045-9a25-790f7a0b0df0",
+              "name": "false_positive_reason_value",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.false_positive_reason.value }}",
+              "type": "string"
+            },
+            {
+              "id": "28ed39b5-a812-4ec5-86ad-0bbf84c97d19",
+              "name": "recommended_action",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.recommended_action.value }}",
+              "type": "string"
+            },
+            {
+              "id": "7fb8a9ab-72f9-47f1-a62d-d0556bd0f3f4",
+              "name": "analyst_note",
+              "value": "={{ $items(\"Loop Through All Feedback\")[0].json.note }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        940,
+        -540
+      ],
+      "id": "7778ad94-1258-4ce5-a69c-ea91fc9a8840",
+      "name": "Initial Assemble Case File"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $node[\"LLM 2: Refine Prompt\"].json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        2580,
+        -540
+      ],
+      "id": "8aed7ee1-0213-4239-914b-90d077bf576d",
+      "name": "Add Body to Prompt",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "bZYwtvOmFl03Ndmz",
+          "name": "Google Docs account 22"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -338,18 +649,122 @@
       "main": [
         [
           {
-            "node": "Get Initial Feedback",
+            "node": "Langsmith Feedback",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Initial Feedback": {
+    "Loop Through All Feedback": {
       "main": [
         [
           {
-            "node": "Check for Records",
+            "node": "Get Run Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Feedback an Object?": {
+      "main": [
+        [
+          {
+            "node": "Loop Through All Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM 1: Analyze & Generate Example": {
+      "main": [
+        [
+          {
+            "node": "Final Assemble Case File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM 2: Refine Prompt": {
+      "main": [
+        [
+          {
+            "node": "Create Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Add Body to Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Run Details": {
+      "main": [
+        [
+          {
+            "node": "Search Guard Filename",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Download appropriate guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Guard Filename": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM 1: Analyze & Generate Example",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "LLM 2: Refine Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Langsmith Feedback": {
+      "main": [
+        [
+          {
+            "node": "Group by Run ID",
             "type": "main",
             "index": 0
           }
@@ -374,51 +789,29 @@
         ]
       ]
     },
-    "Loop Through All Feedback": {
+    "Group by Run ID": {
       "main": [
         [
           {
-            "node": "Prepare Post Body",
+            "node": "Check for Records",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Find Guard File Name": {
+    "Download appropriate guard": {
       "main": [
         [
           {
-            "node": "Find Guard Prompt By Name",
+            "node": "Initial Assemble Case File",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Find Guard Prompt By Name": {
-      "main": [
-        [
-          {
-            "node": "Get Original Guard Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Feedback an Object?": {
-      "main": [
-        [
-          {
-            "node": "Loop Through All Feedback",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Original Guard Prompt": {
+    "Reformat Original Guard": {
       "main": [
         [
           {
@@ -429,7 +822,18 @@
         ]
       ]
     },
-    "LLM 1: Analyze & Generate Example": {
+    "Initial Assemble Case File": {
+      "main": [
+        [
+          {
+            "node": "Reformat Original Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Assemble Case File": {
       "main": [
         [
           {
@@ -440,44 +844,11 @@
         ]
       ]
     },
-    "LLM 2: Refine Prompt": {
-      "main": [
-        [
-          {
-            "node": "Create Google Doc",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Google Doc": {
+    "Add Body to Prompt": {
       "main": [
         [
           {
             "node": "Log Success",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Run Details": {
-      "main": [
-        [
-          {
-            "node": "Find Guard File Name",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Post Body": {
-      "main": [
-        [
-          {
-            "node": "Get Run Details",
             "type": "main",
             "index": 0
           }
@@ -489,12 +860,12 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4eee3501-fb1c-4bf1-99f0-0080eeeb7338",
+  "versionId": "10336d76-590d-4073-af47-fc501cddeedb",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "371eeabae1bc66baa92b2fb66b3ad10012ef11e20b9f55516de501be4b6b1e56"
   },
-  "id": "x7GAJhKqdVT111xH",
+  "id": "BscuQMsEPcdcbsa5",
   "tags": [
     {
       "createdAt": "2025-07-16T00:31:12.618Z",
